@@ -1,3 +1,5 @@
+require_relative 'player'
+
 class Game
   DECK = { '2+' => 2, '2<3' => 2, '2^' => 2, '2<>' => 2, '3+' => 3, '3<3' => 3, '3^' => 3, '3<>' => 3,
            '4+' => 4, '4<3' => 4, '4^' => 4, '4<>' => 4, '5+' => 5, '5<3' => 5, '5^' => 5, '5<>' => 5,
@@ -7,9 +9,19 @@ class Game
            'Q+' => 10, 'Q<3' => 10, 'Q^' => 10, 'Q<>' => 10, 'J+' => 10, 'J<3' => 10, 'J^' => 10, 'J<>' => 10,
            'A+' => [1, 11], 'A<3' => [1, 11], 'A^' => [1, 11], 'A<>' => [1, 11] }.freeze
 
-  attr_reader :deck
+  attr_reader :deck, :player
 
   def initialize
     @deck = DECK
+  end
+
+  def create_player
+    puts 'Введите свое имя'
+    name = gets.chomp
+    @player = Player.new(name)
+  end
+
+  def start_game
+    player.player_hand = deck.to_a.sample(2).to_h
   end
 end
