@@ -10,7 +10,6 @@ class Game
            'Q+' => 10, 'Q<3' => 10, 'Q^' => 10, 'Q<>' => 10, 'J+' => 10, 'J<3' => 10, 'J^' => 10, 'J<>' => 10,
            'A+' => 11, 'A<3' => 11, 'A^' => 11, 'A<>' => 11 }.freeze
 
-
   attr_reader :deck, :player, :dealer
 
   def initialize
@@ -38,7 +37,6 @@ class Game
   end
 
   def add_card
-    
     player.player_hand.merge!(deck.to_a.sample(1).to_h)
     deck.reject! { |key| player.player_hand.include?(key) }
     puts "Ваши карты: #{player.player_hand.keys.join(', ')},"
