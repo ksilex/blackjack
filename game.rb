@@ -1,7 +1,9 @@
 require_relative 'player'
 require_relative 'dealer'
+require_relative 'initial_hands'
 
 class Game
+  include InitialHands
   DECK = { '2+' => 2, '2<3' => 2, '2^' => 2, '2<>' => 2, '3+' => 3, '3<3' => 3, '3^' => 3, '3<>' => 3,
            '4+' => 4, '4<3' => 4, '4^' => 4, '4<>' => 4, '5+' => 5, '5<3' => 5, '5^' => 5, '5<>' => 5,
            '6+' => 6, '6<3' => 6, '6^' => 6, '6<>' => 6, '7+' => 7, '7<3' => 7, '7^' => 7, '7<>' => 7,
@@ -24,12 +26,10 @@ class Game
   def start_game
     refresh_deck
     @dealer = Dealer.new
-    player.player_hand = deck.to_a.sample(2).to_h
-    deck.reject! { |key| player.player_hand.include?(key) }
-    puts "Ваши карты: #{player.player_hand.keys.join(', ')},"
-    dealer.dealer_hand = deck.to_a.sample(2).to_h
-    deck.reject! { |key| dealer.dealer_hand.include?(key) }
-    puts "#{player.player_hand.keys.count} карта(ы) у дилера"
+    init_hand(player)
+    puts "Ваши карты: #{player.hand.keys.join(', ')},"
+    init_hand(dealer)
+    puts "#{dealer.hand.keys.count} карта(ы) у дилера"
     player.bank -= 10
     dealer.bank -= 10
     game_bank = 20
@@ -37,19 +37,19 @@ class Game
   end
 
   def add_card
-    player.player_hand.merge!(deck.to_a.sample(1).to_h)
-    deck.reject! { |key| player.player_hand.include?(key) }
-    puts "Ваши карты: #{player.player_hand.keys.join(', ')},"
+    player.hand.merge!(deck.to_a.sample(1).to_h)
+    deck.reject! { |key| player.hand.include?(key) }
+    puts "Ваши карты: #{player.hand.keys.join(', ')},"
     count_sum
   end
 
   def count_sum
-    sum = player.player_hand.values.sum
+    sum = player.hand.values.sum
     if (player.hand_with_ace?) && (sum > 21)
-      aces = player.player_hand.select { |key, val| val == 11 }
+      aces = player.hand.select { |key, val| val == 11 }
       aces = aces.keys.map(&:to_s)
-      aces.each { |ace| player.player_hand[ace] = 1 }
-      sum = player.player_hand.values.sum
+      aces.each { |ace| player.hand[ace] = 1 }
+      sum = player.hand.values.sum
     end
     sum
   end

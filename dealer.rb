@@ -1,5 +1,5 @@
 class Dealer
-  attr_accessor :dealer_hand, :bank
+  attr_accessor :hand, :bank
 
   def initialize
     @bank = 100
