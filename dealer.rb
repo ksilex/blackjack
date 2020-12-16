@@ -4,4 +4,8 @@ class Dealer
   def initialize
     @bank = 100
   end
+
+  def need_cards?
+    sum < 17
+  end
 end
