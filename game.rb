@@ -38,64 +38,70 @@ class Game
   end
 
   def player_give_card
-    if add_card(player)
-    player_hand
+    if !game_finished
+      add_card(player)
+      dealers_turn
     else 
-      puts "У вас в руке уже 3 карты"
+      game_finished
     end
-    dealers_turn
   end
 
   def dealers_turn
     if dealer.need_cards?
       add_card(dealer)
       puts "#{dealer.hand.keys.count} карта(ы) у дилера"
+      game_finished
     else
-      puts "Дилер пропускает ход"
+      game_finished
     end
-    players_choice
   end
 
   def players_choice
-    if !busted
       puts "1. Пропустить ход
             2. Добавить карту
             3. Открыть карты
             Введите действие:"
       choice = gets.chomp
       send ACTIONS[choice]
-    else
-      busted
-    end
   end
 
   def show_cards
-    
+    player_hand
+    puts "Дилер: #{dealer.hand.keys.join(', ')}, очков: #{dealer.count_sum}"
+    if dealer.count_sum == player.count_sum 
+      puts "Ничья"
+    else
+      puts dealer.count_sum < player.count_sum ? 'Вы выиграли' : 'Вы проиграли'
+    end
   end
 
   private
 
-  def busted
+  def game_finished
     if player.busted? && dealer.busted?
       puts 'Вы проиграли'
-      bank
+      player_hand
+      puts "Дилер: #{dealer.hand.keys.join(', ')}, очков: #{dealer.count_sum}"
     elsif player.busted?
       puts 'Вы проиграли'
-      bank
+      player_hand
+      puts "Дилер: #{dealer.hand.keys.join(', ')}, очков: #{dealer.count_sum}"
     elsif dealer.busted?
       puts 'Вы выиграли'
-      bank
+      player_hand
+      puts "Дилер: #{dealer.hand.keys.join(', ')}, очков: #{dealer.count_sum}"
     else
       can_add_more_cards?
     end
   end
 
   def can_add_more_cards?
-    if !add_card(player) && !add_card(dealer)
+    if !dealer.need_cards? && player.hand.size == 3
       player_hand
       puts "Дилер: #{dealer.hand.keys.join(', ')}, очков: #{dealer.count_sum}"
       puts dealer.count_sum < player.count_sum ? 'Вы выиграли' : 'Вы проиграли'
     else
+      show_cards
       false
     end
   end
