@@ -38,78 +38,84 @@ class Game
   end
 
   def player_give_card
-    if !game_finished
-      add_card(player)
-      dealers_turn
+    if add_card(player)
+    player_hand
     else 
-      game_finished
+      puts "У вас в руке уже 3 карты"
     end
+    dealers_turn
   end
 
   def dealers_turn
     if dealer.need_cards?
       add_card(dealer)
       puts "#{dealer.hand.keys.count} карта(ы) у дилера"
-      game_finished
     else
-      game_finished
+      puts "Дилер пропускает ход"
     end
+    show_cards
   end
 
   def players_choice
-      puts "1. Пропустить ход
+    if cards_max || someone_busted?
+      show_cards
+    else
+      puts "1. Пропустить ход 
             2. Добавить карту
             3. Открыть карты
-            Введите действие:"
+            Введите действие:" 
       choice = gets.chomp
       send ACTIONS[choice]
+    end
   end
 
   def show_cards
+    puts "\nРезультат\n\n"
     player_hand
     puts "Дилер: #{dealer.hand.keys.join(', ')}, очков: #{dealer.count_sum}"
-    if dealer.count_sum == player.count_sum 
+    if someone_busted?
+      result_if_busted
+    elsif dealer.count_sum == player.count_sum
       puts "Ничья"
     else
       puts dealer.count_sum < player.count_sum ? 'Вы выиграли' : 'Вы проиграли'
     end
+    puts "Нажмите 1 для новой раздачи"
+    new_hand = gets.chomp.to_i
+    self.start_game if new_hand == 1
   end
 
   private
 
-  def game_finished
-    if player.busted? && dealer.busted?
-      puts 'Вы проиграли'
-      player_hand
-      puts "Дилер: #{dealer.hand.keys.join(', ')}, очков: #{dealer.count_sum}"
-    elsif player.busted?
-      puts 'Вы проиграли'
-      player_hand
-      puts "Дилер: #{dealer.hand.keys.join(', ')}, очков: #{dealer.count_sum}"
-    elsif dealer.busted?
-      puts 'Вы выиграли'
-      player_hand
-      puts "Дилер: #{dealer.hand.keys.join(', ')}, очков: #{dealer.count_sum}"
+  def cards_max
+    if (!dealer.need_cards? || dealer.hand.size == 3) && player.hand.size == 3
+      true
     else
-      can_add_more_cards?
+      false
     end
   end
 
-  def can_add_more_cards?
-    if !dealer.need_cards? && player.hand.size == 3
-      player_hand
-      puts "Дилер: #{dealer.hand.keys.join(', ')}, очков: #{dealer.count_sum}"
-      puts dealer.count_sum < player.count_sum ? 'Вы выиграли' : 'Вы проиграли'
-    else
-      show_cards
-      false
-    end
+  def someone_busted?
+    player.busted? || dealer.busted?
   end
 
   def player_hand
     puts "Ваши карты: #{player.hand.keys.join(', ')}, очков: #{player.count_sum}"
   end
+
   def refresh_deck
     @deck = DECK.dup
+  end
+
+  def result_if_busted
+    if dealer.busted? && player.busted?
+      puts "Вы проиграли"
+    elsif player.busted?
+      puts "Вы проиграли"
+    elsif dealer.busted?
+      puts "Вы выиграли"
+    else
+      false
+    end
   end
 end
