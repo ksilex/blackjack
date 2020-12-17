@@ -114,8 +114,6 @@ class Game
       puts "Вы проиграли"
     elsif dealer.busted?
       puts "Вы выиграли"
-    else
-      false
     end
   end
 end
