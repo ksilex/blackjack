@@ -1,14 +1,12 @@
+require_relative 'initial_hands'
+
 class Player
-  ACES = { 'A+' => 11, 'A<3' => 11, 'A^' => 11, 'A<>' => 11 }.freeze
-  attr_accessor :hand, :aces, :bank
+  include InitialHands
+  attr_accessor :hand, :bank, :bet
 
   def initialize(name)
     @bank = 100
     @name = name
-    @aces = ACES
-  end
-
-  def hand_with_ace?
-    (aces.keys & hand.keys).any?
+    @bet = 10
   end
 end
