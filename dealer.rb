@@ -1,11 +1,12 @@
-require_relative 'initial_hands'
+require_relative 'hand_info'
 
 class Dealer
-  include InitialHands
-  attr_accessor :hand, :bank
+  include HandInfo
+  attr_accessor :hand, :bank, :bet
 
   def initialize
     @bank = 100
+    @bet = 10
   end
 
   def need_cards?

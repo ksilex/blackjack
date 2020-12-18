@@ -1,0 +1,24 @@
+AllCops:
+  Exclude:
+    - 'metaprogramming/*.rb'
+
+Metrics/LineLength:
+  Max: 100
+
+Metrics/MethodLength: 
+  Max: 20
+
+Metrics/ClassLength:
+  Max: 1500
+  
+Style/FrozenStringLiteralComment:
+  Enabled: false 
+
+Style/Documentation:
+  Enabled: false 
+
+Style/ClassVars:
+  Enabled: false 
+
+Metrics/AbcSize:
+  Max: 30

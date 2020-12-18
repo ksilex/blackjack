@@ -1,47 +1,51 @@
 require_relative 'player'
 require_relative 'dealer'
-require_relative 'initial_hands'
+require_relative 'hand_manipulations'
 
 class Game
-  include InitialHands
-  DECK = { '2+' => 2, '2<3' => 2, '2^' => 2, '2<>' => 2, '3+' => 3, '3<3' => 3, '3^' => 3, '3<>' => 3,
-           '4+' => 4, '4<3' => 4, '4^' => 4, '4<>' => 4, '5+' => 5, '5<3' => 5, '5^' => 5, '5<>' => 5,
-           '6+' => 6, '6<3' => 6, '6^' => 6, '6<>' => 6, '7+' => 7, '7<3' => 7, '7^' => 7, '7<>' => 7,
-           '8+' => 8, '8<3' => 8, '8^' => 8, '8<>' => 8, '9+' => 9, '9<3' => 9, '9^' => 9, '9<>' => 9,
-           '10+' => 10, '10<3' => 10, '10^' => 10, '10<>' => 10, 'K+' => 10, 'K<3' => 10, 'K^' => 10, 'K<>' => 10,
-           'Q+' => 10, 'Q<3' => 10, 'Q^' => 10, 'Q<>' => 10, 'J+' => 10, 'J<3' => 10, 'J^' => 10, 'J<>' => 10,
-           'A+' => 11, 'A<3' => 11, 'A^' => 11, 'A<>' => 11 }.freeze
-  ACTIONS = { '1' => :dealers_turn, '2' => :player_give_card, '3' => :show_cards}.freeze
+  include HandManipulations
+  DECK = { '2+' => 2, '2<3' => 2, '2^' => 2, '2<>' => 2, '3+' => 3, '3<3' => 3, '3^' => 3,
+           '3<>' => 3, '4+' => 4, '4<3' => 4, '4^' => 4, '4<>' => 4, '5+' => 5, '5<3' => 5,
+           '5^' => 5, '5<>' => 5, '6+' => 6, '6<3' => 6, '6^' => 6, '6<>' => 6, '7+' => 7,
+           '7<3' => 7, '7^' => 7, '7<>' => 7, '8+' => 8, '8<3' => 8, '8^' => 8, '8<>' => 8,
+           '9+' => 9, '9<3' => 9, '9^' => 9, '9<>' => 9, '10+' => 10, '10<3' => 10, '10^' => 10,
+           '10<>' => 10, 'K+' => 10, 'K<3' => 10, 'K^' => 10, 'K<>' => 10, 'Q+' => 10, 'Q<3' => 10,
+           'Q^' => 10, 'Q<>' => 10, 'J+' => 10, 'J<3' => 10, 'J^' => 10, 'J<>' => 10, 'A+' => 11,
+           'A<3' => 11, 'A^' => 11, 'A<>' => 11 }.freeze
+  ACTIONS = { '1' => :dealers_turn, '2' => :player_give_card, '3' => :show_cards }.freeze
 
-  attr_reader :deck, :player, :dealer, :game_bank
+  attr_reader :deck, :player, :dealer
+  attr_accessor :game_bank
 
   def initialize
+    create_player
   end
 
   def create_player
     puts 'Введите свое имя'
     name = gets.chomp
     @player = Player.new(name)
+    @dealer = Dealer.new
+    start_game
   end
 
-  def start_game
-    refresh_deck
-    @dealer = Dealer.new
-    init_hand(player)
-    player_hand
-    init_hand(dealer)
-    puts "#{dealer.hand.keys.count} карты у дилера"
-    player.bank -= player.bet
-    dealer.bank -= player.bet
-    @game_bank = player.bet * 2
-    players_choice
+  def start_game_callback
+    if player.bank.zero?
+      puts 'Вы банкрот'
+      start_new_game
+    elsif dealer.bank.zero?
+      puts 'Вы обанкротили дилера, он не может продолжить игру...'
+      start_new_game
+    else
+      start_game
+    end
   end
 
   def player_give_card
     if add_card(player)
-    player_hand
-    else 
-      puts "У вас в руке уже 3 карты"
+      player_hand
+    else
+      puts 'У вас в руке уже 3 карты'
     end
     dealers_turn
   end
@@ -51,19 +55,19 @@ class Game
       add_card(dealer)
       puts "#{dealer.hand.keys.count} карта(ы) у дилера"
     else
-      puts "Дилер пропускает ход"
+      puts 'Дилер пропускает ход'
     end
     show_cards
   end
 
   def players_choice
-    if cards_max || someone_busted?
+    if cards_max? || someone_busted?
       show_cards
     else
-      puts "1. Пропустить ход 
+      puts "1. Пропустить ход
             2. Добавить карту
             3. Открыть карты
-            Введите действие:" 
+            Введите действие:"
       choice = gets.chomp
       send ACTIONS[choice]
     end
@@ -76,18 +80,24 @@ class Game
     if someone_busted?
       result_if_busted
     elsif dealer.count_sum == player.count_sum
-      puts "Ничья"
+      puts 'Ничья'
+      draw
+    elsif dealer.count_sum < player.count_sum
+      puts 'Вы выиграли'
+      player_won
     else
-      puts dealer.count_sum < player.count_sum ? 'Вы выиграли' : 'Вы проиграли'
+      puts 'Вы проиграли'
+      dealer_won
     end
-    puts "Нажмите 1 для новой раздачи"
+    puts "Ваш банк: #{player.bank}"
+    puts 'Нажмите 1 для новой раздачи'
     new_hand = gets.chomp.to_i
-    self.start_game if new_hand == 1
+    start_game_callback if new_hand == 1
   end
 
   private
 
-  def cards_max
+  def cards_max?
     if (!dealer.need_cards? || dealer.hand.size == 3) && player.hand.size == 3
       true
     else
@@ -109,11 +119,45 @@ class Game
 
   def result_if_busted
     if dealer.busted? && player.busted?
-      puts "Вы проиграли"
+      puts 'Вы проиграли'
+      dealer_won
     elsif player.busted?
-      puts "Вы проиграли"
+      puts 'Вы проиграли'
+      dealer_won
     elsif dealer.busted?
-      puts "Вы выиграли"
+      puts 'Вы выиграли'
+      player_won
     end
+  end
+
+  def start_new_game
+    puts 'Начать новую игру? Нажмите Enter'
+    enter = gets
+    start_game if enter == "\n"
+  end
+
+  def start_game
+    refresh_deck
+    init_hand(player)
+    player_hand
+    init_hand(dealer)
+    puts "#{dealer.hand.keys.count} карты у дилера"
+    player.bank -= player.bet
+    dealer.bank -= player.bet
+    self.game_bank = player.bet + dealer.bet
+    players_choice
+  end
+
+  def player_won
+    player.bank += game_bank
+  end
+
+  def dealer_won
+    dealer.bank += game_bank
+  end
+
+  def draw
+    dealer.bank += game_bank / 2
+    player.bank += game_bank / 2
   end
 end

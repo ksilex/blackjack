@@ -1,7 +1,7 @@
-require_relative 'initial_hands'
+require_relative 'hand_info'
 
 class Player
-  include InitialHands
+  include HandInfo
   attr_accessor :hand, :bank, :bet
 
   def initialize(name)
