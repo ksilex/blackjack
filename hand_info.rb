@@ -1,5 +1,5 @@
 module HandInfo
-  ACES = { 'A+' => 11, 'A<3' => 11, 'A^' => 11, 'A<>' => 11}.freeze
+  ACES = { 'A+' => 11, 'A<3' => 11, 'A^' => 11, 'A<>' => 11 }.freeze
 
   def aces
     @aces = ACES

@@ -1,9 +1,9 @@
 require_relative 'player'
 require_relative 'dealer'
-require_relative 'hand_manipulations'
+require_relative 'ui'
 
 class Game
-  include HandManipulations
+  include UI
   DECK = { '2+' => 2, '2<3' => 2, '2^' => 2, '2<>' => 2, '3+' => 3, '3<3' => 3, '3^' => 3,
            '3<>' => 3, '4+' => 4, '4<3' => 4, '4^' => 4, '4<>' => 4, '5+' => 5, '5<3' => 5,
            '5^' => 5, '5<>' => 5, '6+' => 6, '6<3' => 6, '6^' => 6, '6<>' => 6, '7+' => 7,
@@ -22,7 +22,7 @@ class Game
   end
 
   def create_player
-    puts 'Введите свое имя'
+    UI.ask_name
     name = gets.chomp
     @player = Player.new(name)
     @dealer = Dealer.new
@@ -30,11 +30,8 @@ class Game
   end
 
   def start_game_callback
-    if player.bank.zero?
-      puts 'Вы банкрот'
-      start_new_game
-    elsif dealer.bank.zero?
-      puts 'Вы обанкротили дилера, он не может продолжить игру...'
+    if player.bank.zero? || dealer.bank.zero?
+      UI.bankrupt(person)
       start_new_game
     else
       start_game
@@ -43,9 +40,9 @@ class Game
 
   def player_give_card
     if add_card(player)
-      player_hand
+      UI.player_hand(player.hand.keys, player.count_sum)
     else
-      puts 'У вас в руке уже 3 карты'
+      UI.player_hand_full
     end
     dealers_turn
   end
@@ -53,9 +50,9 @@ class Game
   def dealers_turn
     if dealer.need_cards?
       add_card(dealer)
-      puts "#{dealer.hand.keys.count} карта(ы) у дилера"
+      UI.dealer_hand_count(dealer.hand.keys.count)
     else
-      puts 'Дилер пропускает ход'
+      UI.dealer_pass
     end
     show_cards
   end
@@ -64,10 +61,7 @@ class Game
     if cards_max? || someone_busted?
       show_cards
     else
-      puts "1. Пропустить ход
-            2. Добавить карту
-            3. Открыть карты
-            Введите действие:"
+      UI.player_options
       choice = gets.chomp
       send ACTIONS[choice]
     end
@@ -75,27 +69,36 @@ class Game
 
   def show_cards
     puts "\nРезультат\n\n"
-    player_hand
-    puts "Дилер: #{dealer.hand.keys.join(', ')}, очков: #{dealer.count_sum}"
+    UI.player_hand(player.hand.keys, player.count_sum)
+    UI.dealer_hand(dealer.hand.keys, dealer.count_sum)
     if someone_busted?
-      result_if_busted
+      UI.result_if_busted(dealer, player, game_bank)
     elsif dealer.count_sum == player.count_sum
-      puts 'Ничья'
-      draw
+      UI.draw(player, dealer, game_bank)
     elsif dealer.count_sum < player.count_sum
-      puts 'Вы выиграли'
-      player_won
+      UI.player_won(player, game_bank)
     else
-      puts 'Вы проиграли'
-      dealer_won
+      UI.dealer_won(dealer, game_bank)
     end
-    puts "Ваш банк: #{player.bank}"
-    puts 'Нажмите 1 для новой раздачи'
+    UI.show_bank(player)
     new_hand = gets.chomp.to_i
     start_game_callback if new_hand == 1
   end
 
   private
+
+  def init_hand(person)
+    person.hand = deck.to_a.sample(2).to_h
+    deck.reject! { |key| person.hand.include?(key) }
+  end
+
+  def add_card(person)
+    return if person.hand.size > 2
+
+    person.hand.merge!(deck.to_a.sample(1).to_h)
+    deck.reject! { |key| person.hand.include?(key) }
+    person.count_sum
+  end
 
   def cards_max?
     if (!dealer.need_cards? || dealer.hand.size == 3) && player.hand.size == 3
@@ -109,25 +112,8 @@ class Game
     player.busted? || dealer.busted?
   end
 
-  def player_hand
-    puts "Ваши карты: #{player.hand.keys.join(', ')}, очков: #{player.count_sum}"
-  end
-
   def refresh_deck
     @deck = DECK.dup
-  end
-
-  def result_if_busted
-    if dealer.busted? && player.busted?
-      puts 'Вы проиграли'
-      dealer_won
-    elsif player.busted?
-      puts 'Вы проиграли'
-      dealer_won
-    elsif dealer.busted?
-      puts 'Вы выиграли'
-      player_won
-    end
   end
 
   def start_new_game
@@ -139,25 +125,12 @@ class Game
   def start_game
     refresh_deck
     init_hand(player)
-    player_hand
+    UI.player_hand(player.hand.keys, player.count_sum)
     init_hand(dealer)
-    puts "#{dealer.hand.keys.count} карты у дилера"
+    UI.dealer_hand_count(dealer.hand.keys.count)
     player.bank -= player.bet
     dealer.bank -= player.bet
     self.game_bank = player.bet + dealer.bet
     players_choice
-  end
-
-  def player_won
-    player.bank += game_bank
-  end
-
-  def dealer_won
-    dealer.bank += game_bank
-  end
-
-  def draw
-    dealer.bank += game_bank / 2
-    player.bank += game_bank / 2
   end
 end
