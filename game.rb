@@ -68,7 +68,7 @@ class Game
   end
 
   def show_cards
-    puts "\nРезультат\n\n"
+    UI.result_line
     UI.player_hand(player.hand.keys, player.count_sum)
     UI.dealer_hand(dealer.hand.keys, dealer.count_sum)
     if someone_busted?
@@ -117,7 +117,7 @@ class Game
   end
 
   def start_new_game
-    puts 'Начать новую игру? Нажмите Enter'
+    UI.new_game_msg
     enter = gets
     start_game if enter == "\n"
   end

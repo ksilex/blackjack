@@ -69,4 +69,12 @@ module UI
     puts "Ваш банк: #{player.bank}"
     puts 'Нажмите 1 для новой раздачи'
   end
+
+  def result_msg
+    puts "\nРезультат\n\n"
+  end
+
+  def new_game_msg
+    puts 'Начать новую игру? Нажмите Enter'
+  end
 end
